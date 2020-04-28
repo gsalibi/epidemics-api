@@ -2,7 +2,7 @@
   "name": "epidemics-api",
   "version": "1.0.0",
   "description": "An API that provides public health data on pandemic cases.",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
