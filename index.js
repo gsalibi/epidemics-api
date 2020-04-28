@@ -1,3 +1,4 @@
+require('dotenv').config({path:'.env'})
 const express = require('express');
 const app = express();   // create express app      
 const bodyParser = require('body-parser');
@@ -22,6 +23,11 @@ app.get('/test/:id?', (req, res) => {
     let filter = '';
     if(req.params.id) filter = ' WHERE id=' + parseInt(req.params.id);
     execSQLQuery('SELECT * FROM TestTable' + filter, res);
+});// define another route
+
+
+app.get('/query', (req, res) => {
+    execSQLQuery('SELECT * FROM Cities', res);
 });
 
 // listen for requests
@@ -29,11 +35,11 @@ app.listen(PORT, () => console.log(`Listening on ${ PORT }`))
 
 function execSQLQuery(sqlQry, res){
     const connection = mysql.createConnection({
-      host     : process.env.HOST,
-      port     : process.env.HOST_PORT,
-      user     : process.env.USER,
-      password : process.env.PASS,
-      database : process.env.DB
+      host     : process.env.DB_HOST,
+      port     : process.env.DB_PORT,
+      user     : process.env.DB_USER,
+      password : process.env.DB_PASS,
+      database : process.env.DB_NAME
     });
   
     connection.query(sqlQry, function(error, results, fields){
