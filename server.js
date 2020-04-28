@@ -1,3 +1,4 @@
+require('dotenv').config({path:'.env'})
 const express = require('express');
 const app = express();   // create express app      
 const bodyParser = require('body-parser');
@@ -16,13 +17,14 @@ app.get('/', (req, res) => {
     if (Object.keys(req.query).length === 0)
         res.json({ "message": "Welcome to Epidemics API. For information on how to use, visit: https://github.com/gsalibi/epidemics-api" });
     else {
-        let minLat = req.query.minLat;
-        let maxLat = req.query.maxLat;
-        let minLon = req.query.minLon;
-        let maxLon = req.query.maxLon;
-        let diseaseID = req.query.diseaseID;
-    
-        parseInt(minLat);
+        let minLat = parseFloat(req.query.minLat);
+        let maxLat = parseFloat(req.query.maxLat);
+        let minLon = parseFloat(req.query.minLon);
+        let maxLon = parseFloat(req.query.maxLon);
+        let diseaseID = Number.isNaN(parseFloat(req.query.diseaseID)) ? 'DiseaseID' : parseFloat(req.query.diseaseID);
+        
+        console.log(Number.isNaN(parseFloat(req.query.diseaseID)));
+        console.log(diseaseID)
     
         execSQLQuery("\
         SELECT Diseases.Name as disease, Outbreaks.NumberOfCases, Cities.name as city, States.name as state, \
@@ -71,8 +73,8 @@ function execSQLQuery(sqlQry, res){
     
     connection.query(sqlQry, function(error, results, fields){
         if(error) 
-          res.json("Consulta invalida");
-          // res.json(error);
+          //res.json("Consulta invalida");
+          res.json(error);
         else
           res.json(results);
         connection.end();
