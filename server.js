@@ -41,8 +41,8 @@ app.get('/', (req, res) => {
         latitude <= " + maxLat + " and \
         longitude >= " + minLon + " and \
         longitude <= " + maxLon + " and \
-        Cities.name LIKE '" + city + "'"  + " and \
-        Diseases.name LIKE '" + disease + "'" , res);
+        Cities.name LIKE '" + city + "' or REPLACE(Cities.name, ' ', '')  = '" + city + "' and \
+        Diseases.name LIKE '" + disease + "' or REPLACE(Cities.name, ' ', '')  = '" + disease + "'" , res);
     }
 });
 
