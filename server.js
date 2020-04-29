@@ -12,37 +12,37 @@ app.use(bodyParser.urlencoded({ extended: true }))
 // parse requests of content-type - application/json
 app.use(bodyParser.json())
 
-// define a simple route
+// define the route
 app.get('/', (req, res) => {
     if (Object.keys(req.query).length === 0)
         res.json({ "message": "Welcome to Epidemics API. For information on how to use, visit: https://github.com/gsalibi/epidemics-api" });
     else {
-        let minLat = parseFloat(req.query.minLat);
-        let maxLat = parseFloat(req.query.maxLat);
-        let minLon = parseFloat(req.query.minLon);
-        let maxLon = parseFloat(req.query.maxLon);
-        let diseaseID = Number.isNaN(parseFloat(req.query.diseaseID)) ? 'DiseaseID' : parseFloat(req.query.diseaseID);
-        
-        console.log(Number.isNaN(parseFloat(req.query.diseaseID)));
-        console.log(diseaseID)
+        let minLat = req.query.minLat == undefined ? 'latitude' : parseFloat(req.query.minLat);
+        let maxLat = req.query.maxLat == undefined ? 'latitude' : parseFloat(req.query.maxLat);
+        let minLon = req.query.minLon == undefined ? 'longitude' : parseFloat(req.query.minLon);
+        let maxLon = req.query.maxLon == undefined ? 'longitude' : parseFloat(req.query.maxLon);
+        let diseaseID = req.query.diseaseID == undefined ? 'DiseaseID' : parseInt(req.query.diseaseID);
+        let city = req.query.city == undefined ? '%' : req.query.city;
+        let disease = req.query.disease == undefined ? '%' : req.query.disease;
     
         execSQLQuery("\
         SELECT Diseases.Name as disease, Outbreaks.NumberOfCases, Cities.name as city, States.name as state, \
         Countries.name_pt as country, Cities.latitude as latitude, Cities.longitude as longitude, Outbreaks.Date as date \
-        FROM `Outbreaks` \
-        INNER JOIN `Cities`  \
+        FROM Outbreaks INNER JOIN Cities  \
             ON Outbreaks.CityID = Cities.cityID \
-        INNER JOIN `States` \
+        INNER JOIN States \
             ON Cities.stateID = States.stateID \
-        INNER JOIN `Countries` \
+        INNER JOIN Countries \
             ON States.CountryID = Countries.id \
-        INNER JOIN `Diseases`  \
-            ON Outbreaks.DiseaseID = Diseases.idDisease WHERE \
-        DiseaseID = " + diseaseID + " and \
-        Cities.latitude >= " + minLat + " and \
-        Cities.latitude <= " + maxLat + " and \
-        Cities.longitude >= " + minLon + " and \
-        Cities.longitude <= " + maxLon, res);
+        INNER JOIN Diseases  \
+            ON Outbreaks.DiseaseID = Diseases.idDisease \
+        WHERE DiseaseID = " + diseaseID + " and \
+        latitude >= " + minLat + " and \
+        latitude <= " + maxLat + " and \
+        longitude >= " + minLon + " and \
+        longitude <= " + maxLon + " and \
+        Cities.name LIKE '" + city + "'"  + " and \
+        Diseases.name LIKE '" + disease + "'" , res);
     }
 });
 
@@ -52,11 +52,6 @@ app.get('/test/:id?', (req, res) => {
     let filter = '';
     if(req.params.id) filter = ' WHERE id=' + parseInt(req.params.id);
     execSQLQuery('SELECT * FROM TestTable' + filter, res);
-});
-
-
-app.get('/query', (req, res) => {
-    execSQLQuery("SELECT Diseases.Name as Disease, Outbreaks.NumberOfCases, Cities.name as City, States.name as State, Countries.name_pt as Country, Outbreaks.Date as Date FROM `Outbreaks` INNER JOIN `Cities` ON Outbreaks.CityID = Cities.cityID INNER JOIN `States` ON Cities.stateID = States.stateID INNER JOIN `Countries` ON States.CountryID = Countries.id INNER JOIN `Diseases` ON Outbreaks.DiseaseID = Diseases.idDisease WHERE DiseaseID = '5' and States.stateID = '35'", res);
 });
 
 // listen for requests
