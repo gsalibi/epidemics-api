@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
         let disease = req.query.disease == undefined ? '%' : req.query.disease;
     
         execSQLQuery("\
-        SELECT Diseases.Name as disease, Outbreaks.NumberOfCases, Cities.name as city, States.name as state, \
+        SELECT Diseases.Name as disease, Outbreaks.NumberOfCases, Outbreaks.FatalCases, Cities.name as city, States.name as state, \
         Countries.name_pt as country, Cities.latitude as latitude, Cities.longitude as longitude, Outbreaks.Date as date \
         FROM Outbreaks INNER JOIN Cities  \
             ON Outbreaks.CityID = Cities.cityID \
