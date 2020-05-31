@@ -22,7 +22,8 @@ app.get('/', (req, res) => {
         let minLon = req.query.minLon == undefined ? 'longitude' : parseFloat(req.query.minLon);
         let maxLon = req.query.maxLon == undefined ? 'longitude' : parseFloat(req.query.maxLon);
         let diseaseID = req.query.diseaseID == undefined ? 'DiseaseID' : parseInt(req.query.diseaseID);
-        let date = req.query.date == undefined ? '2020-05-28' : req.query.date;
+        let startDate = req.query.startDate == undefined ? '2020-05-28' : req.query.startDate;
+        let endDate = req.query.endDate == undefined ? '2020-05-28' : req.query.endDate;
         let city = req.query.city == undefined ? '%' : req.query.city;
         let disease = req.query.disease == undefined ? '%' : req.query.disease;
 
@@ -30,10 +31,11 @@ app.get('/', (req, res) => {
             console.log("Entrou")
             // disease += " and OutbreaksDate = '2020-05-28'"
         }
+        console.log(startDate)
     
         execSQLQuery("\
         SELECT Diseases.Name as disease, Outbreaks.NumberOfCases, Outbreaks.FatalCases, Cities.name as city, States.name as state, \
-        Countries.name_pt as country, Cities.latitude as latitude, Cities.longitude as longitude, Outbreaks.Date as date \
+        Countries.name_pt as country, Cities.latitude as latitude, Cities.longitude as longitude, DATE_FORMAT(Date, '%Y-%m-%d') as date \
         FROM Outbreaks INNER JOIN Cities  \
             ON Outbreaks.CityID = Cities.cityID \
         INNER JOIN States \
@@ -43,7 +45,8 @@ app.get('/', (req, res) => {
         INNER JOIN Diseases  \
             ON Outbreaks.DiseaseID = Diseases.idDisease \
         WHERE DiseaseID = " + diseaseID + " and \
-        Date LIKE IF(DiseaseID = 5,'" + date + "','%') and   \
+        Date >= IF(DiseaseID = 5,'" + startDate + "',Date) and \
+        Date <= IF(DiseaseID = 5,'" + endDate + "',Date) and \
         latitude >= " + minLat + " and \
         latitude <= " + maxLat + " and \
         longitude >= " + minLon + " and \
