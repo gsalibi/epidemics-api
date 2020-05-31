@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
         INNER JOIN Diseases  \
             ON Outbreaks.DiseaseID = Diseases.idDisease \
         WHERE DiseaseID = " + diseaseID + " and \
-        Date LIKE IF(DiseaseID = 5," + date + ",'%') and   \
+        Date LIKE IF(DiseaseID = 5,'" + date + "','%') and   \
         latitude >= " + minLat + " and \
         latitude <= " + maxLat + " and \
         longitude >= " + minLon + " and \
