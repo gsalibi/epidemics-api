@@ -22,8 +22,14 @@ app.get('/', (req, res) => {
         let minLon = req.query.minLon == undefined ? 'longitude' : parseFloat(req.query.minLon);
         let maxLon = req.query.maxLon == undefined ? 'longitude' : parseFloat(req.query.maxLon);
         let diseaseID = req.query.diseaseID == undefined ? 'DiseaseID' : parseInt(req.query.diseaseID);
+        let date = req.query.date == undefined ? '2020-05-28' : req.query.date;
         let city = req.query.city == undefined ? '%' : req.query.city;
         let disease = req.query.disease == undefined ? '%' : req.query.disease;
+
+        if (disease == "COVID-19" || diseaseID == 5 || (disease == "%" && diseaseID == "DiseaseID")) {
+            console.log("Entrou")
+            // disease += " and OutbreaksDate = '2020-05-28'"
+        }
     
         execSQLQuery("\
         SELECT Diseases.Name as disease, Outbreaks.NumberOfCases, Outbreaks.FatalCases, Cities.name as city, States.name as state, \
@@ -37,6 +43,7 @@ app.get('/', (req, res) => {
         INNER JOIN Diseases  \
             ON Outbreaks.DiseaseID = Diseases.idDisease \
         WHERE DiseaseID = " + diseaseID + " and \
+        Date LIKE IF(DiseaseID = 5," + date + ",'%') and   \
         latitude >= " + minLat + " and \
         latitude <= " + maxLat + " and \
         longitude >= " + minLon + " and \
