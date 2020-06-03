@@ -63,34 +63,33 @@ def insert_csv_into_DB(csv_path: str):
         database=os.environ['DB_NAME']
     )
     cursor = mydb.cursor()
-    select_sql = 'SELECT Outbreaks.idOutbreak as idOutbreak \
-                FROM Outbreaks INNER JOIN Cities \
-                    ON Outbreaks.CityID = Cities.cityID \
-                INNER JOIN Diseases \
-                    ON Outbreaks.DiseaseID = Diseases.idDisease \
-                WHERE Diseases.idDisease = 1 and Outbreaks.Date = "'
+    select_sql = 'SELECT LastUpdate FROM Diseases ORDER BY idDisease;'
     insert_sql = 'INSERT INTO Outbreaks (NumberOfCases, FatalCases, DiseaseID, Date, CityID) \
                 VALUES (%s, %s, "1", %s, %s);'
+
+    # get last update dates
+    cursor.execute(select_sql)
+    lastUpdate = cursor.fetchall()
+    mydb.commit()
 
     # DRS,GVE,Região de Saúde, município,SE01,SE02,SE03,SE04,SE05,SE06,SE07,SE08,SE09,SE10,SE11,SE12,SE13,SE14,SE15,SE16,SE17,SE18,TOTAL
     csv_file = open(csv_path)
     lines = csv_file.readlines()[1:]
     reader = csv.reader(lines, delimiter=',')
 
+    # set dates by weeks
     date = []
     for i in range(18):
         week = "2020-W" + str(i)
         date.append(datetime.datetime.strptime(week + '-6', "%Y-W%W-%w").strftime('%Y-%m-%d'))
 
     for row in reader:
-        print("Updating line number: " + str(reader.line_num + 1))
         ibge_cod = row[3]
         for i in range(4, 22):
             total_cases = row[i]
-            # current_select_sql = select_sql + date[i - 4] + '" and Cities.cityID = ' + ibge_cod + ";"
-            # cursor.execute(current_select_sql)
-            outbreak_id = [] # cursor.fetchall()
-            if len(outbreak_id) == 0:
+            
+            if date[i - 4] > lastUpdate[0][0].strftime('%Y-%m-%d'):
+                print("Updating line number: " + str(reader.line_num + 1))
                 val = (total_cases, None, date[i - 4], ibge_cod)
                 cursor.execute(insert_sql, val)
 
