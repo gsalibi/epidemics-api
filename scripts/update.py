@@ -24,7 +24,7 @@ mydb = mysql.connector.connect(
     passwd=os.environ['DB_PASS'],
     database=os.environ['DB_NAME']
 )
-mycursor = mydb.cursor()
+cursor = mydb.cursor()
 select_sql = 'SELECT Outbreaks.idOutbreak as idOutbreak \
             FROM Outbreaks INNER JOIN Cities \
                 ON Outbreaks.CityID = Cities.cityID \
@@ -58,11 +58,11 @@ for row in reader:
     total_cases = row[10]
     total_deaths = row[12]
     current_select_sql = select_sql + date + '" and Cities.cityID = ' + ibge_cod + ";"
-    mycursor.execute(current_select_sql)
-    outbreak_id = mycursor.fetchall()
+    cursor.execute(current_select_sql)
+    outbreak_id = cursor.fetchall()
         
     if len(outbreak_id) == 0:
         val = (total_cases, total_deaths, date, ibge_cod)
-        mycursor.execute(insert_sql, val)
+        cursor.execute(insert_sql, val)
 
     mydb.commit()

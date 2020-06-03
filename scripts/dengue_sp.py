@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 import datetime
+import mysql.connector
+import os
 
 
 def fullIBGE(cod6: str):
@@ -23,70 +25,78 @@ def convert_to_css(data_path: str):
 
     text = "DRS,GVE,Região de Saúde, município,SE01,SE02,SE03,SE04,SE05,SE06,SE07,SE08,SE09,SE10,SE11,SE12,SE13,SE14,SE15,SE16,SE17,SE18,TOTAL\n"
     for i in range(66, len(match) - 28, 26):
-        try: 
+        try:
             int(str(match[i + 6].text).split(' ')[0])
         except ValueError:
             continue
         text += match[i + 0].text
-        text += " "
-        text += match[i + 1].text
+        # ignore 1
         text += ","
         text += match[i + 2].text
-        text += " "
-        text += match[i + 3].text
+        # ignore 3
         text += ","
         text += match[i + 4].text
-        text += " "
-        text += match[i + 5].text
+        # ignore 5
         text += ","
         text += fullIBGE(str(match[i + 6].text).split(' ')[0])
         text += ","
-        text += match[i + 7].text
-        text += ","
-        text += match[i + 8].text
-        text += ","
-        text += match[i + 9].text
-        text += ","
-        text += match[i + 10].text
-        text += ","
-        text += match[i + 11].text
-        text += ","
-        text += match[i + 12].text
-        text += ","
-        text += match[i + 13].text
-        text += ","
-        text += match[i + 14].text
-        text += ","
-        text += match[i + 15].text
-        text += ","
-        text += match[i + 16].text
-        text += ","
-        text += match[i + 17].text
-        text += ","
-        text += match[i + 18].text
-        text += ","
-        text += match[i + 19].text
-        text += ","
-        text += match[i + 20].text
-        text += ","
-        text += match[i + 21].text
-        text += ","
-        text += match[i + 22].text
-        text += ","
-        text += match[i + 23].text
-        text += ","
-        text += match[i + 24].text
-        text += ","
-        text += str( match[i + 25].text).replace('.', '')
+
+        # add week values and sum total
+        total_sum = 0
+        for j in range(7, 25):
+            total_sum += int(match[i + j].text.replace('.', ''))
+            text += str(total_sum) + ','
+
+        text += str(match[i + 25].text).replace('.', '')
         text += "\n"
     csv_file = open('dengue_sp.csv', 'wb')
     csv_file.write(text.encode())
     csv_file.close()
 
 
-# convert_to_css("data.htm")
+def insert_csv_into_DB(csv_path: str):
+    # set BD
+    mydb = mysql.connector.connect(
+        host=os.environ['DB_HOST'],
+        user=os.environ['DB_USER'],
+        passwd=os.environ['DB_PASS'],
+        database=os.environ['DB_NAME']
+    )
+    cursor = mydb.cursor()
+    select_sql = 'SELECT Outbreaks.idOutbreak as idOutbreak \
+                FROM Outbreaks INNER JOIN Cities \
+                    ON Outbreaks.CityID = Cities.cityID \
+                INNER JOIN Diseases \
+                    ON Outbreaks.DiseaseID = Diseases.idDisease \
+                WHERE Diseases.idDisease = 1 and Outbreaks.Date = "'
+    insert_sql = 'INSERT INTO Outbreaks (NumberOfCases, FatalCases, DiseaseID, Date, CityID) \
+                VALUES (%s, %s, "1", %s, %s);'
 
-d = "2020-W0" # week -1
-r = datetime.datetime.strptime(d + '-6', "%Y-W%W-%w").strftime('%Y-%m-%d')
+    # DRS,GVE,Região de Saúde, município,SE01,SE02,SE03,SE04,SE05,SE06,SE07,SE08,SE09,SE10,SE11,SE12,SE13,SE14,SE15,SE16,SE17,SE18,TOTAL
+    csv_file = open(csv_path)
+    lines = csv_file.readlines()[1:]
+    reader = csv.reader(lines, delimiter=',')
 
-print(r)
+    date = []
+    for i in range(18):
+        week = "2020-W" + str(i)
+        date.append(datetime.datetime.strptime(week + '-6', "%Y-W%W-%w").strftime('%Y-%m-%d'))
+
+    for row in reader:
+        print("Updating line number: " + str(reader.line_num + 1))
+        ibge_cod = row[3]
+        for i in range(4, 22):
+            total_cases = row[i]
+            # current_select_sql = select_sql + date[i - 4] + '" and Cities.cityID = ' + ibge_cod + ";"
+            # cursor.execute(current_select_sql)
+            outbreak_id = [] # cursor.fetchall()
+            if len(outbreak_id) == 0:
+                val = (total_cases, None, date[i - 4], ibge_cod)
+                cursor.execute(insert_sql, val)
+
+        mydb.commit()
+
+#convert_to_css("data.htm")
+
+insert_csv_into_DB('dengue_sp.csv')
+
